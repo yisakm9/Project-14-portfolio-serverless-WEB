@@ -125,3 +125,14 @@ module "api_gateway" {
     Environment = var.environment
   }
 }
+
+resource "aws_ssm_parameter" "api_url" {
+  name        = "/${var.project_name}/${var.environment}/api_url"
+  description = "The Base URL for the API Gateway"
+  type        = "String"
+  value       = module.api_gateway.api_endpoint
+
+  tags = {
+    Environment = var.environment
+  }
+}
