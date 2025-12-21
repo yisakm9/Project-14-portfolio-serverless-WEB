@@ -52,3 +52,13 @@ resource "aws_s3_bucket_policy" "allow_cloudfront" {
     ]
   })
 }
+
+
+module "dynamodb_table" {
+  source     = "../../modules/dynamodb"
+  table_name = "${var.project_name}-contact-messages-${var.environment}"
+
+  tags = {
+    Environment = var.environment
+  }
+}
