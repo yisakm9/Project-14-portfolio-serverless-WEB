@@ -136,3 +136,25 @@ resource "aws_ssm_parameter" "api_url" {
     Environment = var.environment
   }
 }
+
+resource "aws_ssm_parameter" "frontend_bucket" {
+  name        = "/${var.project_name}/${var.environment}/frontend_bucket"
+  description = "The S3 bucket name for the frontend"
+  type        = "String"
+  value       = module.frontend_bucket.bucket_id
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+resource "aws_ssm_parameter" "cloudfront_id" {
+  name        = "/${var.project_name}/${var.environment}/cloudfront_id"
+  description = "The CloudFront Distribution ID"
+  type        = "String"
+  value       = module.cloudfront.distribution_id
+
+  tags = {
+    Environment = var.environment
+  }
+}

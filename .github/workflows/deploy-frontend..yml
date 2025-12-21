@@ -6,16 +6,17 @@ on:
       - main
     paths:
       - 'frontend/**'
-  # Allows you to run this workflow manually from the GitHub Actions tab
   workflow_dispatch:
 
 env:
   AWS_REGION: us-east-1
-  # This must match the resource "aws_ssm_parameter" "api_url" path in Terraform
+  # Define SSM Paths (must match Terraform)
   SSM_API_URL_PATH: "/yisak-portfolio/dev/api_url"
+  SSM_BUCKET_PATH: "/yisak-portfolio/dev/frontend_bucket"
+  SSM_CLOUDFRONT_PATH: "/yisak-portfolio/dev/cloudfront_id"
 
 permissions:
-  id-token: write   # REQUIRED for AWS OIDC authentication
+  id-token: write
   contents: read
 
 jobs:
@@ -27,11 +28,9 @@ jobs:
         working-directory: ./frontend
 
     steps:
-      # 1. Checkout Code
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -39,12 +38,9 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      # 3. Install Dependencies
       - name: Install Dependencies
         run: npm ci
 
-      # 4. Authenticate with AWS (OIDC)
-      # This enables us to talk to SSM, S3, and CloudFront securey
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -52,45 +48,39 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: GitHubActionsFrontendSession
 
-      # 5. Dynamic Config: Fetch API URL from SSM
-      # This eliminates the need for hardcoded .env files or manual secrets
-      - name: Inject Configuration from SSM
+      # FUTURE PROOFING: Fetch ALL config dynamically
+      - name: Fetch Configuration from SSM
         id: get-params
         run: |
-          echo "Fetching API URL from SSM Path: ${{ env.SSM_API_URL_PATH }}"
+          echo "Fetching infrastructure details from AWS Parameter Store..."
           
-          # Fetch value from AWS
+          # 1. Get API URL
           API_URL=$(aws ssm get-parameter --name "${{ env.SSM_API_URL_PATH }}" --query "Parameter.Value" --output text)
-          
-          # Validation Check
-          if [ -z "$API_URL" ]; then
-            echo "::error::Failed to fetch API URL from SSM. Check Terraform deployment."
-            exit 1
-          fi
-
-          # Inject into Environment for the next step
           echo "VITE_API_URL=$API_URL" >> $GITHUB_ENV
           
-          echo "::notice::Successfully injected API URL: $API_URL"
+          # 2. Get S3 Bucket Name
+          BUCKET_NAME=$(aws ssm get-parameter --name "${{ env.SSM_BUCKET_PATH }}" --query "Parameter.Value" --output text)
+          echo "S3_BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
+          
+          # 3. Get CloudFront ID
+          CF_ID=$(aws ssm get-parameter --name "${{ env.SSM_CLOUDFRONT_PATH }}" --query "Parameter.Value" --output text)
+          echo "CLOUDFRONT_DIST_ID=$CF_ID" >> $GITHUB_ENV
 
-      # 6. Build React App
-      # Vite picks up VITE_API_URL from the environment automatically
+          echo "::notice::Config Loaded: Bucket=$BUCKET_NAME, CloudFront=$CF_ID, API=$API_URL"
+
       - name: Build Production Bundle
         run: npm run build
 
-      # 7. Deploy to S3
-      # --delete: Removes old files that no longer exist
-      # --cache-control: Sets browser caching headers for static assets
       - name: Sync to S3
+        # Uses the environment variable we just fetched
         run: |
-          aws s3 sync ./dist s3://${{ secrets.S3_BUCKET_NAME }} \
+          aws s3 sync ./dist s3://${{ env.S3_BUCKET_NAME }} \
             --delete \
             --cache-control "max-age=31536000,public"
 
-      # 8. Invalidate CloudFront
-      # Forces global edge locations to fetch the latest index.html
       - name: Invalidate CloudFront Cache
+        # Uses the environment variable we just fetched
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CLOUDFRONT_DIST_ID }} \
+            --distribution-id ${{ env.CLOUDFRONT_DIST_ID }} \
             --paths "/*"
