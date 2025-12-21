@@ -14,9 +14,9 @@ resource "aws_dynamodb_table" "this" {
   }
 
   # Server-Side Encryption
-  server_side_encryption {
-    enabled = true
-  }
+  # server_side_encryption {
+  #   enabled = true
+  # }
 
   tags = var.tags
 }
