@@ -1,3 +1,7 @@
+resource "random_pet" "suffix" {
+  length = 2
+}
+
 module "frontend_bucket" {
   source = "../../modules/s3_website"
 
