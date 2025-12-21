@@ -96,7 +96,6 @@ module "lambda_contact" {
 }
 
 
-# 6. API Gateway Module (Updated)
 module "api_gateway" {
   source = "../../modules/apigateway"
 
@@ -104,21 +103,23 @@ module "api_gateway" {
   environment     = var.environment
   allowed_origins = ["*"]
 
-  # Pass the Lambda details here
+  # Pass BOTH Integrations now
   integrations = {
+    # 1. Contact Form
     "contact_form" = {
       lambda_arn           = module.lambda_contact.function_arn
       lambda_invoke_arn    = module.lambda_contact.invoke_arn
       lambda_function_name = module.lambda_contact.function_name
       route_key            = "POST /contact"
     }
-    # Future Example: You can easily add more endpoints later!
-    # "get_projects" = {
-    #   lambda_arn           = module.lambda_projects.function_arn
-    #   lambda_invoke_arn    = module.lambda_projects.invoke_arn
-    #   lambda_function_name = module.lambda_projects.function_name
-    #   route_key            = "GET /projects"
-    # }
+    
+    # 2. Get Projects (NEW)
+    "get_projects" = {
+      lambda_arn           = module.lambda_projects.function_arn
+      lambda_invoke_arn    = module.lambda_projects.invoke_arn
+      lambda_function_name = module.lambda_projects.function_name
+      route_key            = "GET /projects"
+    }
   }
 
   tags = {
@@ -153,6 +154,23 @@ resource "aws_ssm_parameter" "cloudfront_id" {
   description = "The CloudFront Distribution ID"
   type        = "String"
   value       = module.cloudfront.distribution_id
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+# 12. Lambda: Get Projects (NEW)
+module "lambda_projects" {
+  source        = "../../modules/lambda"
+  function_name = "${var.project_name}-get-projects-${var.environment}"
+  iam_role_arn  = module.iam.lambda_execution_role_arn
+  
+  source_file   = "${path.module}/../../../backend/get_projects/main.py"
+
+  environment_variables = {
+    GITHUB_USERNAME = "YourGitHubUsername" # REPLACE THIS
+  }
 
   tags = {
     Environment = var.environment
