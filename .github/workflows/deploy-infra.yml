@@ -1,0 +1,65 @@
+name: Deploy Infrastructure (Terraform)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+
+env:
+  AWS_REGION: us-east-1
+  TF_VERSION: 1.13.1
+  WORKING_DIR: ./terraform/environments/dev
+
+permissions:
+  id-token: write   
+  contents: read
+
+jobs:
+  terraform:
+    name: Terraform Workflow
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActionsTerraformSession
+
+      - name: Terraform Format
+        run: terraform fmt 
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -out=tfplan
+        continue-on-error: false
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve tfplan
