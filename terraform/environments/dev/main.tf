@@ -94,3 +94,34 @@ module "lambda_contact" {
     Environment = var.environment
   }
 }
+
+
+# 6. API Gateway Module (Updated)
+module "api_gateway" {
+  source = "../../modules/apigateway"
+
+  project_name    = var.project_name
+  environment     = var.environment
+  allowed_origins = ["*"]
+
+  # Pass the Lambda details here
+  integrations = {
+    "contact_form" = {
+      lambda_arn           = module.lambda_contact.function_arn
+      lambda_invoke_arn    = module.lambda_contact.invoke_arn
+      lambda_function_name = module.lambda_contact.function_name
+      route_key            = "POST /contact"
+    }
+    # Future Example: You can easily add more endpoints later!
+    # "get_projects" = {
+    #   lambda_arn           = module.lambda_projects.function_arn
+    #   lambda_invoke_arn    = module.lambda_projects.invoke_arn
+    #   lambda_function_name = module.lambda_projects.function_name
+    #   route_key            = "GET /projects"
+    # }
+  }
+
+  tags = {
+    Environment = var.environment
+  }
+}

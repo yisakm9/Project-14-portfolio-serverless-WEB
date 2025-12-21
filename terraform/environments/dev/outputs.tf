@@ -12,3 +12,7 @@ output "s3_bucket_domain_name" {
   description = "The regional domain name of the bucket (used for CloudFront Origin)"
   value       = module.frontend_bucket.bucket_regional_domain_name
 }
+output "api_base_url" {
+  description = "The Base URL for the API Gateway"
+  value       = module.api_gateway.api_endpoint
+}
