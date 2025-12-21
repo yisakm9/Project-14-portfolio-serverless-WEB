@@ -9,3 +9,9 @@ variable "project_name" {
   type        = string
   default     = "yisak-portfolio"
 }
+
+variable "environment" {
+  description = "Deployment environment (dev, staging, prod)"
+  type        = string
+  default     = "dev"
+}
