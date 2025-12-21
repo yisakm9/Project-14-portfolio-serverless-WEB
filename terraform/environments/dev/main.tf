@@ -62,3 +62,35 @@ module "dynamodb_table" {
     Environment = var.environment
   }
 }
+
+
+module "iam" {
+  source             = "../../modules/iam"
+  project_name       = var.project_name
+  environment        = var.environment
+  dynamodb_table_arn = module.dynamodb_table.table_arn
+  
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+module "lambda_contact" {
+  source       = "../../modules/lambda"
+  
+  function_name = "${var.project_name}-contact-${var.environment}"
+  iam_role_arn  = module.iam.lambda_execution_role_arn
+  
+  # Point to the Python file we created in Step 2
+  # Note: Use ${path.module} to reference from the dev folder back to root
+  source_file   = "${path.module}/../../../backend/contact_form/main.py"
+
+  environment_variables = {
+    DYNAMODB_TABLE = module.dynamodb_table.table_name
+  }
+
+  tags = {
+    Environment = var.environment
+  }
+}
