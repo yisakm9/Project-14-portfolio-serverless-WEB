@@ -13,23 +13,24 @@ module "frontend_bucket" {
     Type        = "Frontend"
   }
 }
-# 2. CloudFront Module (New)
+# 2. CloudFront Module (CORRECTED)
 module "cloudfront" {
   source = "../../modules/cloudfront"
 
-  project_name          = var.project_name
-  environment           = var.environment
-  s3_bucket_domain_name = module.frontend_bucket.s3_bucket_domain_name
+  project_name = var.project_name
+  environment  = var.environment
+
+  
+  s3_bucket_domain_name = module.frontend_bucket.bucket_regional_domain_name 
 
   tags = {
     Environment = var.environment
   }
 }
 
-# 3. S3 Bucket Policy (The "Glue" between S3 and CloudFront)
-# This explicitly allows the CloudFront Distribution to read the S3 bucket
+
 resource "aws_s3_bucket_policy" "allow_cloudfront" {
-  bucket = module.frontend_bucket.bucket_id
+  bucket = module.frontend_bucket.bucket_id 
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -41,7 +42,7 @@ resource "aws_s3_bucket_policy" "allow_cloudfront" {
           Service = "cloudfront.amazonaws.com"
         }
         Action    = "s3:GetObject"
-        Resource  = "${module.frontend_bucket.bucket_arn}/*"
+        Resource  = "${module.frontend_bucket.bucket_arn}/*" 
         Condition = {
           StringEquals = {
             "AWS:SourceArn" = module.cloudfront.distribution_arn
