@@ -13,11 +13,14 @@ def handler(event, context):
     print("Received event:", json.dumps(event))
 
     # Handle CORS Preflight (Optionally handled by API Gateway, but good safety)
-    headers = {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-    }
+    # headers = {
+    #    "Access-Control-Allow-Origin": "*",
+    #    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    #    "Access-Control-Allow-Headers": "Content-Type",
+    # }
+
+    # Use empty headers instead, or just Content-Type
+    headers = {"Content-Type": "application/json"}
 
     try:
         # Parse Request Body

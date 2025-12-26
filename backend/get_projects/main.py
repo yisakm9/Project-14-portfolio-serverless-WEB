@@ -3,21 +3,23 @@ import urllib.request
 import os
 
 # Configuration
-GITHUB_USERNAME = os.environ.get('GITHUB_USERNAME', 'yisak-mesifin') # Default or Env Var
+# Defaults to your username, but can be overridden by env var
+GITHUB_USERNAME = os.environ.get('GITHUB_USERNAME', 'yisak-mesifin')
 
 def handler(event, context):
-    print("Fetching projects for:", GITHUB_USERNAME)
+    print(f"Fetching projects for: {GITHUB_USERNAME}")
     
+    # API Gateway (HTTP API) handles CORS based on Terraform config.
+    # We only need to specify the content type here.
     headers = {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
+        "Content-Type": "application/json"
     }
 
     try:
+        # Fetch 6 most recently updated repositories
         url = f"https://api.github.com/users/{GITHUB_USERNAME}/repos?sort=updated&per_page=6"
         
-        # Create request with User-Agent (Required by GitHub API)
+        # GitHub API requires a User-Agent header
         req = urllib.request.Request(url, headers={'User-Agent': 'AWS-Lambda-Portfolio'})
         
         with urllib.request.urlopen(req) as response:
@@ -26,10 +28,10 @@ def handler(event, context):
             
             data = json.loads(response.read().decode())
             
-            # Filter and Format Data for Frontend
             projects = []
             for repo in data:
-                # Skip forked repos if you want original work only
+                # Skip forked repos to show only your original work
+                # Remove this 'if' statement if you want to show forks too
                 if not repo['fork']:
                     projects.append({
                         "id": repo['id'],
@@ -47,9 +49,9 @@ def handler(event, context):
         }
 
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"Error fetching projects: {str(e)}")
         return {
             "statusCode": 500,
             "headers": headers,
-            "body": json.dumps({"error": "Failed to fetch projects"})
+            "body": json.dumps({"error": "Failed to fetch projects from GitHub"})
         }
