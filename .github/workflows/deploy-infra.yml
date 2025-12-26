@@ -116,22 +116,35 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: GitHubActionsFrontendSession
 
-      - name: Fetch Infra Config
-        id: get-params
+      # --- 1. DYNAMIC FETCH STEP ---
+      - name: Fetch Dynamic Config from SSM
+        id: fetch-config
         run: |
-          # 1. Get S3 Bucket Name
-          BUCKET_NAME=$(aws ssm get-parameter --name "${{ env.SSM_BUCKET_PATH }}" --query "Parameter.Value" --output text)
-          echo "S3_BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
+          echo "Fetching latest configuration from AWS..."
           
-          # 2. Get CloudFront ID
-          CF_ID=$(aws ssm get-parameter --name "${{ env.SSM_CLOUDFRONT_PATH }}" --query "Parameter.Value" --output text)
-          echo "CLOUDFRONT_DIST_ID=$CF_ID" >> $GITHUB_ENV
+          # Fetch API URL
+          API_URL=$(aws ssm get-parameter --name "${{ env.SSM_API_URL_PATH }}" --query "Parameter.Value" --output text)
+          echo "DETECTED_API_URL=$API_URL" >> $GITHUB_ENV
+          
+          # Fetch Bucket & CloudFront
+          BUCKET=$(aws ssm get-parameter --name "${{ env.SSM_BUCKET_PATH }}" --query "Parameter.Value" --output text)
+          echo "S3_BUCKET_NAME=$BUCKET" >> $GITHUB_ENV
+          
+          DIST_ID=$(aws ssm get-parameter --name "${{ env.SSM_CLOUDFRONT_PATH }}" --query "Parameter.Value" --output text)
+          echo "CLOUDFRONT_DIST_ID=$DIST_ID" >> $GITHUB_ENV
 
+      # --- 2. DEBUG STEP (Optional but recommended) ---
+      - name: Debug Variables
+        run: |
+          echo "Using API URL: ${{ env.DETECTED_API_URL }}"
+          echo "Using Bucket: ${{ env.S3_BUCKET_NAME }}"
+
+      # --- 3. BUILD STEP WITH EXPLICIT INJECTION ---
       - name: Build Production Bundle
         run: npm run build
         env:
-          # Use the Secret we set up earlier for reliability
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          # This forces Vite to use the URL we just fetched from AWS
+          VITE_API_URL: ${{ env.DETECTED_API_URL }}
 
       - name: Sync to S3
         run: |
