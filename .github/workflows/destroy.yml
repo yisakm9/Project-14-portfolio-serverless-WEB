@@ -1,0 +1,51 @@
+name: Destroy Infrastructure
+
+on:
+  # Manual Trigger Only - Safety First!
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type "DESTROY" to confirm deletion of all resources'
+        required: true
+        default: ''
+
+env:
+  AWS_REGION: us-east-1
+  TF_VERSION: 1.13.1
+  WORKING_DIR: ./terraform/environments/dev
+
+permissions:
+  id-token: write 
+  contents: read
+
+jobs:
+  terraform-destroy:
+    name: Destroy Infrastructure
+    # Safety Check: Job only runs if user typed "DESTROY"
+    if: ${{ github.event.inputs.confirmation == 'DESTROY' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActionsDestroySession
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
