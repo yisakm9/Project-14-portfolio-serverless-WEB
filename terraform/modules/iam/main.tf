@@ -41,6 +41,12 @@ data "aws_iam_policy_document" "lambda_permissions" {
     ]
     resources = [var.dynamodb_table_arn]
   }
+  # 3. SES Email 
+  statement {
+    effect = "Allow"
+    actions = ["ses:SendEmail", "ses:SendRawEmail"]
+    resources = ["arn:aws:ses:*:*:identity/${var.sender_email}"]
+  }
 }
 
 resource "aws_iam_policy" "lambda_policy" {

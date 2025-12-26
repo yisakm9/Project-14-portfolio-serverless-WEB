@@ -15,3 +15,8 @@ variable "environment" {
   type        = string
   default     = "dev"
 }
+variable "sender_email" {
+  description = "The verified SES email address"
+  type        = string
+  default     = "yisakmesifin@gmail.com"
+}

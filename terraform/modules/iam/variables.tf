@@ -6,3 +6,7 @@ variable "dynamodb_table_arn" {
   description = "ARN of the DynamoDB table to grant access to"
   type        = string
 }
+variable "sender_email" {
+  description = "The verified SES email address"
+  type        = string
+}

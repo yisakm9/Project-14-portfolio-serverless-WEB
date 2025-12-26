@@ -69,6 +69,7 @@ module "iam" {
   project_name       = var.project_name
   environment        = var.environment
   dynamodb_table_arn = module.dynamodb_table.table_arn
+  sender_email       = var.sender_email
   
   tags = {
     Environment = var.environment
@@ -88,6 +89,8 @@ module "lambda_contact" {
 
   environment_variables = {
     DYNAMODB_TABLE = module.dynamodb_table.table_name
+     # LINK: Use the email from the SES module
+    SENDER_EMAIL   = module.ses.email_address 
   }
 
   tags = {
@@ -188,4 +191,10 @@ module "monitoring" {
   cloudfront_id     = module.cloudfront.distribution_id
   api_id            = module.api_gateway.api_id
   lambda_contact_name = module.lambda_contact.function_name
+}
+
+# 14. SES Email Identity (Automated Verification Request)
+module "ses" {
+  source        = "../../modules/ses"
+  email_address = "yisakmesifin@gmail.com" # Terraform will ask AWS to verify this
 }
