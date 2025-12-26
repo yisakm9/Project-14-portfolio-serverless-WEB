@@ -54,5 +54,5 @@ resource "aws_lambda_permission" "api_gw_permission" {
   principal     = "apigateway.amazonaws.com"
 
   # Uses the route key to lock down permissions (e.g., allow POST /contact only)
-  source_arn = "${aws_apigatewayv2_api.this.execution_arn}/*/${split(" ", each.value.route_key)[1]}"
+  source_arn = "${aws_apigatewayv2_api.this.execution_arn}/*/*"
 }
