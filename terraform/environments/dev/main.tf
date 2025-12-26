@@ -176,3 +176,16 @@ module "lambda_projects" {
     Environment = var.environment
   }
 }
+
+# 13. Monitoring Dashboard
+module "monitoring" {
+  source = "../../modules/monitoring"
+
+  project_name      = var.project_name
+  environment       = var.environment
+  
+  # Connect the dots between resources
+  cloudfront_id     = module.cloudfront.distribution_id
+  api_id            = module.api_gateway.api_id
+  lambda_contact_name = module.lambda_contact.function_name
+}
