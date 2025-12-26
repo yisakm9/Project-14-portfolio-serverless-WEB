@@ -16,3 +16,18 @@ output "api_base_url" {
   description = "The Base URL for the API Gateway"
   value       = module.api_gateway.api_endpoint
 }
+
+output "cloudfront_distribution_id" {
+  description = "The ID of the CloudFront distribution (used for cache invalidation)"
+  value       = module.cloudfront.distribution_id
+}
+
+output "cloudfront_domain_name" {
+  description = "The public URL of your website"
+  value       = module.cloudfront.distribution_domain_name
+}
+
+output "cloudfront_distribution_arn" {
+  description = "The ARN of the CloudFront distribution"
+  value       = module.cloudfront.distribution_arn
+}
