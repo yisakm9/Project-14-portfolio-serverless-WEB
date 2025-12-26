@@ -2,7 +2,9 @@
 data "archive_file" "lambda_zip" {
   type        = "zip"
   source_file = var.source_file
-  output_path = "${path.module}/lambda_function.zip"
+  # FIX: Use function_name to create a unique zip file for each module instance
+  output_path = "${path.module}/${var.function_name}.zip" 
+
 }
 
 # 0. Explicit Log Group Management (Cost Optimization)
