@@ -1,0 +1,50 @@
+name: Deploy Backend (Lambda)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**' # Only run when Python code changes
+  workflow_dispatch:   # Allows manual trigger
+
+env:
+  AWS_REGION: us-east-1
+  TF_VERSION: 1.13.1
+  WORKING_DIR: ./terraform/environments/dev
+
+permissions:
+  id-token: write      # Required for OIDC
+  contents: read
+
+jobs:
+  update-lambda:
+    name: Update Lambda Functions
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActionsBackendSession
+
+      - name: Terraform Init
+        run: terraform init
+
+      # Terraform will detect that main.py has changed, re-zip it, 
+      # and update only the AWS Lambda function resource.
+      - name: Deploy Backend Changes
+        run: terraform apply -auto-approve
