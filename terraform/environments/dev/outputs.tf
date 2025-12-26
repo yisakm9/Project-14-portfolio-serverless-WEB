@@ -24,7 +24,7 @@ output "cloudfront_distribution_id" {
 
 output "cloudfront_domain_name" {
   description = "The public URL of your website"
-  value       = module.cloudfront.distribution_domain_name
+  value       = "https://${module.cloudfront.distribution_domain_name}"
 }
 
 output "cloudfront_distribution_arn" {

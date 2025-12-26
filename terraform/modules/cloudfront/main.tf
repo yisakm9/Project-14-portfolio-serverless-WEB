@@ -108,3 +108,11 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
 
   tags = var.tags
 }
+# Auto-publish Distribution ID to SSM
+resource "aws_ssm_parameter" "cloudfront_id" {
+  name        = "/${var.project_name}/${var.environment}/cloudfront_id"
+  description = "The CloudFront Distribution ID"
+  type        = "String"
+  value       = aws_cloudfront_distribution.s3_distribution.id
+  tags        = var.tags
+}

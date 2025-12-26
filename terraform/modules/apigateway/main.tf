@@ -56,3 +56,11 @@ resource "aws_lambda_permission" "api_gw_permission" {
   # Uses the route key to lock down permissions (e.g., allow POST /contact only)
   source_arn = "${aws_apigatewayv2_api.this.execution_arn}/*/*"
 }
+# Auto-publish API URL to SSM
+resource "aws_ssm_parameter" "api_url" {
+  name        = "/${var.project_name}/${var.environment}/api_url"
+  description = "The Base URL for the API Gateway"
+  type        = "String"
+  value       = aws_apigatewayv2_api.this.api_endpoint
+  tags        = var.tags
+}

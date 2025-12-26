@@ -35,3 +35,13 @@ resource "aws_s3_bucket_public_access_block" "block_public" {
   block_public_policy     = true
   restrict_public_buckets = true
 }
+
+# Auto-publish Bucket Name to SSM
+resource "aws_ssm_parameter" "frontend_bucket" {
+  # Note: You need to pass 'project_name' and 'environment' variables to this module now if not already there
+  name        = "/${var.project_name}/${var.environment}/frontend_bucket"
+  description = "The S3 bucket name for the frontend"
+  type        = "String"
+  value       = aws_s3_bucket.website_bucket.id
+  tags        = var.tags
+}
