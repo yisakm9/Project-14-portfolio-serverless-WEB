@@ -1,3 +1,42 @@
+#  Security Headers Policy (OWASP Best Practices)
+resource "aws_cloudfront_response_headers_policy" "security_headers" {
+  name = "${var.project_name}-security-headers-${var.environment}"
+
+  security_headers_config {
+    # Protects against Clickjacking
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+
+    # Protects against MIME sniffing
+    content_type_options {
+      override = true
+    }
+
+    # Protects against XSS attacks
+    xss_protection {
+      mode_block = true
+      protection = true
+      override   = true
+    }
+
+    # Enforces HTTPS
+    strict_transport_security {
+      access_control_max_age_sec = 31536000 # 1 year
+      include_subdomains         = true
+      preload                    = true
+      override                   = true
+    }
+
+    # Prevents sensitive info from being sent in the Referer header
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+  }
+}
+
 # 1. Create Origin Access Control (The modern way to secure S3)
 resource "aws_cloudfront_origin_access_control" "oac" {
   name                              = "${var.project_name}-oac-${var.environment}"
@@ -26,6 +65,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     allowed_methods  = ["GET", "HEAD"]
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = "S3-${var.project_name}"
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
 
     forwarded_values {
       query_string = false

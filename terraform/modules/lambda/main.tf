@@ -11,7 +11,7 @@ resource "aws_lambda_function" "this" {
   function_name = var.function_name
   role          = var.iam_role_arn
   handler       = "main.handler" # filename.function_name
-  runtime       = "python3.9"
+  runtime       = "python3.10"
   timeout       = 10
 
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256

@@ -169,7 +169,7 @@ module "lambda_projects" {
   source_file   = "${path.module}/../../../backend/get_projects/main.py"
 
   environment_variables = {
-    GITHUB_USERNAME = "YourGitHubUsername" # REPLACE THIS
+    GITHUB_USERNAME = "yisakm9" # REPLACE THIS
   }
 
   tags = {
