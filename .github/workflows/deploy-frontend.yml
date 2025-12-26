@@ -67,7 +67,10 @@ jobs:
           echo "CLOUDFRONT_DIST_ID=$CF_ID" >> $GITHUB_ENV
 
           echo "::notice::Config Loaded: Bucket=$BUCKET_NAME, CloudFront=$CF_ID, API=$API_URL"
-
+      - name: Debug SSM Values
+        run: |
+          echo "API URL is: ${{ env.VITE_API_URL }}"
+          echo "Bucket is: ${{ env.S3_BUCKET_NAME }}"
       - name: Build Production Bundle
         run: npm run build
         env:
