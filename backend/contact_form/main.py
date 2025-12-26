@@ -4,47 +4,35 @@ import os
 import uuid
 from datetime import datetime
 
-# Initialize DynamoDB Client
 dynamodb = boto3.resource('dynamodb')
 TABLE_NAME = os.environ['DYNAMODB_TABLE']
 table = dynamodb.Table(TABLE_NAME)
 
 def handler(event, context):
-    print("Received event:", json.dumps(event))
+    print("Received event:", json.dumps(event)) # This log helps us debug
 
-    # Handle CORS Preflight (Optionally handled by API Gateway, but good safety)
-    # headers = {
-    #    "Access-Control-Allow-Origin": "*",
-    #    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    #    "Access-Control-Allow-Headers": "Content-Type",
-    # }
-
-    # Use empty headers instead, or just Content-Type
-    headers = {"Content-Type": "application/json"}
+    # Standard headers for HTTP API
+    headers = {
+        "Content-Type": "application/json"
+    }
 
     try:
-        # Parse Request Body
+        # Robust Body Parsing
         if 'body' not in event or event['body'] is None:
             raise ValueError("No body provided")
             
-        body = json.loads(event['body'])
+        # Handle cases where body is already a dict (local testing) vs string (API GW)
+        if isinstance(event['body'], str):
+            body = json.loads(event['body'])
+        else:
+            body = event['body']
         
-        # Validation
-        required_fields = ['name', 'email', 'message']
-        for field in required_fields:
-            if field not in body:
-                return {
-                    "statusCode": 400,
-                    "headers": headers,
-                    "body": json.dumps({"error": f"Missing field: {field}"})
-                }
-
         # Create Item
         item = {
             'id': str(uuid.uuid4()),
-            'name': body['name'],
-            'email': body['email'],
-            'message': body['message'],
+            'name': body.get('name'),
+            'email': body.get('email'),
+            'message': body.get('message'),
             'created_at': datetime.utcnow().isoformat()
         }
 
@@ -62,5 +50,5 @@ def handler(event, context):
         return {
             "statusCode": 500,
             "headers": headers,
-            "body": json.dumps({"error": "Internal Server Error"})
+            "body": json.dumps({"error": str(e)})
         }
